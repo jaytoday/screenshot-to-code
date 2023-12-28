@@ -1,21 +1,44 @@
-import useThrottle from "../hooks/useThrottle";
+import { useEffect, useRef } from "react";
+import classNames from "classnames";
+// import useThrottle from "../hooks/useThrottle";
 
 interface Props {
   code: string;
+  device: "mobile" | "desktop";
 }
 
-function Preview({ code }: Props) {
-  const throttledCode = useThrottle(code, 200);
+function Preview({ code, device }: Props) {
+  const throttledCode = code;
+  // Temporary disable throttling for the preview not updating when the code changes
+  // useThrottle(code, 200);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (iframe && iframe.contentDocument) {
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(throttledCode);
+      iframe.contentDocument.close();
+    }
+  }, [throttledCode]);
 
   return (
-    <div className="w-[704px]">
+    <div className="flex justify-center mx-2">
       <iframe
+        id={`preview-${device}`}
+        ref={iframeRef}
         title="Preview"
-        srcDoc={throttledCode}
-        className="border-[4px] border-black rounded-[20px] shadow-lg 
-        transform scale-[0.8] origin-top-left w-[1280px] h-[832px]"
+        className={classNames(
+          "border-[4px] border-black rounded-[20px] shadow-lg",
+          "transform scale-[0.9] origin-top",
+          {
+            "w-full h-[832px]": device === "desktop",
+            "w-[400px] h-[832px]": device === "mobile",
+          }
+        )}
       ></iframe>
     </div>
   );
 }
+
 export default Preview;
